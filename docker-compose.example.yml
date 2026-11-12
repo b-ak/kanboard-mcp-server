@@ -1,0 +1,30 @@
+# Example: run the MCP server next to Kanboard (e.g. on a Raspberry Pi).
+# Copy to docker-compose.yml, create .env from .env.example, then: docker compose up -d
+services:
+  kanboard-mcp:
+    image: ghcr.io/b-ak/kanboard-mcp-server:latest   # or: build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Reach Kanboard from inside Docker. Pick ONE:
+      #  - same compose project / shared network: the Kanboard service name
+      KANBOARD_URL: http://kanboard
+      #  - Kanboard published on the host:  http://host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      # Bound to localhost only; expose it publicly via Cloudflare Tunnel or a reverse proxy.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - mcp-data:/data
+
+  # Optional: Cloudflare Tunnel gives you a public HTTPS URL without opening router ports.
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   restart: unless-stopped
+  #   command: tunnel --no-autoupdate run
+  #   environment:
+  #     TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+
+volumes:
+  mcp-data:
