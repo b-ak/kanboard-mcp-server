@@ -243,6 +243,8 @@ run it from the compose file:
 
 Then add the route as above. No router ports need to be opened.
 
+The route can be added before the container is running; until then the hostname returns `502`.
+
 Verify from anywhere:
 
 ```bash
@@ -259,7 +261,9 @@ container isn't running or the port differs.
 1. **Settings → Connectors → Add custom connector**.
 2. Name `Kanboard`, URL `https://kanboard-mcp.example.com/mcp`. Leave the advanced OAuth fields
    empty: the server registers clients itself.
-3. **Add**, then **Connect**. GitHub asks you to authorize *Kanboard MCP*; approve.
+3. **Add**, then **Connect**. GitHub asks you to authorize *Kanboard MCP*; approve with
+   **Authorize *your-github-login***. The screen may also list your GitHub organizations with
+   *Grant* or *Request* buttons; leave them, as the server needs no organization access.
 4. In a new chat, make sure Kanboard is enabled in the tools menu and ask:
    *"Run get_me on Kanboard."* It answers with your Kanboard username and `api_mode: user`.
 
@@ -283,6 +287,11 @@ claude mcp add --scope user --transport http kanboard https://kanboard-mcp.examp
 ```
 
 Start `claude`, run `/mcp`, select **kanboard** → **Authenticate**, and approve in the browser.
+`/mcp` then shows *Authentication successful. Connected to kanboard.* Ask *"run get_me on
+Kanboard"* to confirm; it answers with your Kanboard username.
+
+To check the scope, run `claude mcp list` from a different folder: `kanboard` should be listed
+there too.
 
 ## Tell Claude when to use Kanboard
 
@@ -349,6 +358,10 @@ Set Kanboard's Application URL (step 1).
 `localhost` in your browser is your own computer. Use `https://kanboard.example.com`, or
 `http://<server-ip>:8100` if the port is published on the LAN.
 
+#### Checks give unexpected results (a port in use, a response from something that isn't Kanboard)
+Check the shell prompt: the commands must run on the Docker host, not on your laptop. Your laptop
+can have its own services on the same ports.
+
 #### `claude: command not found`, or the connector only appears in one project
 Install Claude Code (step 8) and open a new terminal. Re-add the server with `--scope user`.
 
@@ -361,7 +374,8 @@ Install Claude Code (step 8) and open a new terminal. Re-add the server with `--
 - The personal Kanboard token limits Claude to your projects and attributes its changes to you.
 - Bind kanboard-mcp to `127.0.0.1` (as above) so it is only reachable through the tunnel. Do the
   same for Kanboard's published port (`"127.0.0.1:8100:80"`) if you only open it via the tunnel and
-  kanboard-mcp reaches it by service name.
+  kanboard-mcp reaches it by service name. Confirm with
+  `docker ps --format "{{.Names}}  {{.Ports}}"`: each port should start with `127.0.0.1:`.
 - Keep `kanboard-mcp.env` at mode `600` and out of git.
 
 ## Other setups

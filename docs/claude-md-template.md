@@ -39,6 +39,20 @@ Several changes can be proposed together as one list and approved at once.
 Don't change assignee, due date or tags unless I ask. Never delete tasks or comments.
 ```
 
+## Short version for claude.ai Project instructions
+
+The same rules in one paragraph, for a claude.ai Project's instructions:
+
+```text
+Work on this project is tracked in Kanboard project "<project name>" (ID <id>), columns
+<Backlog> → <Ready> → <Work in progress> → <Done>. Read the board freely. Never change it without
+my OK: propose new tasks for <Backlog> (title, description, priority 0–3); propose moving a task to
+<Work in progress> when we start it; propose a progress comment (done / left / files) at the end of
+a session; when a task is finished, propose moving it to <Done> and closing it. Several changes can
+be proposed as one list. Don't change assignee, due date or tags unless asked; never delete
+anything.
+```
+
 ## Notes
 
 - **Column vs. status.** In Kanboard, moving a task to the Done column doesn't close it. Closed is
