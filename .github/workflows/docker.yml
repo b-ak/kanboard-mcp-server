@@ -4,6 +4,14 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    # Changes that don't affect the image don't rebuild or republish it.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "tests/**"
+      - "LICENSE"
+      - ".env.example"
+      - "docker-compose.example.yml"
   workflow_dispatch:
 
 permissions:

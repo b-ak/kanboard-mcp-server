@@ -1,24 +1,36 @@
-# Example: run the MCP server next to Kanboard (e.g. on a Raspberry Pi).
-# Copy to docker-compose.yml, create .env from .env.example, then: docker compose up -d
+# Standalone example: the MCP server in its own compose project.
+#
+# If Kanboard runs in Docker Compose on the same host, it's simpler to add the kanboard-mcp service
+# to Kanboard's own compose file instead and use KANBOARD_URL=http://kanboard
+# (see docs/deployment.md, step 5).
+#
+# Copy to docker-compose.yml, create kanboard-mcp.env from .env.example, then: docker compose up -d
 services:
   kanboard-mcp:
     image: ghcr.io/b-ak/kanboard-mcp-server:latest   # or: build: .
     restart: unless-stopped
-    env_file: .env
+    env_file: kanboard-mcp.env
     environment:
-      # Reach Kanboard from inside Docker. Pick ONE:
-      #  - same compose project / shared network: the Kanboard service name
-      KANBOARD_URL: http://kanboard
-      #  - Kanboard published on the host:  http://host.docker.internal:8080
+      # How this container reaches Kanboard. Set it here, not in the env file: a value in
+      # `environment:` overrides the same variable from `env_file:`. Pick ONE:
+      #  - Kanboard publishes a port on this host: use that host port. Only works if the port isn't
+      #    bound to 127.0.0.1 (e.g. "8080:80", not "127.0.0.1:8080:80").
+      KANBOARD_URL: http://host.docker.internal:8080
+      #  - Kanboard is a container on a Docker network shared with this one: its service name.
+      #    Containers talk on the container's own port (80), not the published one.
+      #    KANBOARD_URL: http://kanboard
+      #  - Kanboard runs elsewhere: its URL.
+      #    KANBOARD_URL: https://kanboard.example.com
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:host-gateway"   # makes host.docker.internal resolve on Linux
     ports:
       # Bound to localhost only; expose it publicly via Cloudflare Tunnel or a reverse proxy.
       - "127.0.0.1:8000:8000"
     volumes:
-      - mcp-data:/data
+      - mcp-data:/data   # OAuth state; keeps logins across restarts
 
   # Optional: Cloudflare Tunnel gives you a public HTTPS URL without opening router ports.
+  # With cloudflared in this file, the tunnel route's Service URL is http://kanboard-mcp:8000.
   # cloudflared:
   #   image: cloudflare/cloudflared:latest
   #   restart: unless-stopped
