@@ -1,3 +1,5 @@
+<img src="docs/logo.svg" alt="" width="96" align="right">
+
 # Kanboard MCP Server
 
 An [MCP](https://modelcontextprotocol.io) server that lets Claude create, update and track tasks on
@@ -33,21 +35,30 @@ Read-only tools are annotated as such, so Claude clients can auto-approve them a
 You can use either kind of token:
 
 - **Personal access token (recommended):** Kanboard → *My profile* → *API* → generate a token. Set
-  `KANBOARD_USERNAME` to your username. Actions run as you and follow your project permissions.
+  `KANBOARD_USERNAME` to your login name. Actions run as you and follow your project permissions.
 - **Application token:** Kanboard → *Settings* → *API*. Set `KANBOARD_USERNAME=jsonrpc`. It has full
   access to every project. Set `KANBOARD_DEFAULT_USER_ID` so comments have an author.
+
+The two are easy to mix up: the application token used with your own username fails with
+`401 Unauthorized`.
+
+Also set Kanboard's *Settings → Application settings → Application URL* to the address you open
+Kanboard at; otherwise the task links Claude shows you point to `http://localhost/...`.
 
 ## 2. Use it from Claude Code on the same machine (stdio)
 
 No clone needed. [`uv`](https://docs.astral.sh/uv/) fetches and runs the server:
 
 ```bash
-claude mcp add kanboard \
+claude mcp add --scope user kanboard \
   --env KANBOARD_URL=http://localhost:8080 \
   --env KANBOARD_USERNAME=your-username \
   --env KANBOARD_API_TOKEN=your-token \
   -- uvx --from git+https://github.com/b-ak/kanboard-mcp-server kanboard-mcp
 ```
+
+`--scope user` makes the server available in every project; without it, it is registered for the
+current folder only.
 
 Claude Desktop's `claude_desktop_config.json` takes the same command:
 
@@ -79,16 +90,24 @@ claude.ai and the mobile apps connect from Anthropic's cloud, so the server must
 Claude (web / mobile / Code) ──HTTPS──▶ tunnel/proxy ──▶ kanboard-mcp :8000 ──▶ Kanboard
 ```
 
-See **[docs/deployment.md](docs/deployment.md)** for a step-by-step Raspberry Pi setup with Docker and
-Cloudflare Tunnel.
+**[docs/deployment.md](docs/deployment.md)** walks through the whole setup step by step: Kanboard
+token, GitHub OAuth App, Docker Compose, Cloudflare Tunnel, connecting Claude, verification and
+troubleshooting.
 
 Once it's running at `https://kanboard-mcp.example.com`:
 
 - **claude.ai / mobile:** *Settings → Connectors → Add custom connector*, URL
   `https://kanboard-mcp.example.com/mcp`, then sign in with GitHub. Connectors you add on claude.ai
   are also available in the Claude mobile apps.
-- **Claude Code:** `claude mcp add --transport http kanboard https://kanboard-mcp.example.com/mcp`,
+- **Claude Code:**
+  `claude mcp add --scope user --transport http kanboard https://kanboard-mcp.example.com/mcp`,
   then run `/mcp` to sign in.
+
+## 4. Tell Claude when to use it
+
+Connecting gives Claude the tools, not the habits. Put your rules (which project, when to create,
+move, comment or close tasks, what to ask first) in your project's `CLAUDE.md` or a claude.ai
+Project's instructions. Start from **[docs/claude-md-template.md](docs/claude-md-template.md)**.
 
 ## Configuration
 
