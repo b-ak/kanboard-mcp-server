@@ -1,0 +1,41 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.b-ak/kanboard-mcp-server",
+  "title": "Kanboard MCP",
+  "description": "Connect Claude to a self-hosted Kanboard board to manage tasks",
+  "repository": {
+    "url": "https://github.com/b-ak/kanboard-mcp-server",
+    "source": "github"
+  },
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/b-ak/kanboard-mcp-server:0.2.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "KANBOARD_URL",
+          "description": "Base URL of your Kanboard instance",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "KANBOARD_USERNAME",
+          "description": "Kanboard username that owns the personal API token",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "KANBOARD_API_TOKEN",
+          "description": "Kanboard personal API token (My profile → API)",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

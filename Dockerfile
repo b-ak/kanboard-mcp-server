@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+# Ownership verification for the MCP Registry (registry.modelcontextprotocol.io):
+# must match the "name" field in server.json.
+LABEL io.modelcontextprotocol.server.name="io.github.b-ak/kanboard-mcp-server"
+
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
