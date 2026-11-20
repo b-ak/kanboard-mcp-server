@@ -293,6 +293,36 @@ Kanboard"* to confirm; it answers with your Kanboard username.
 To check the scope, run `claude mcp list` from a different folder: `kanboard` should be listed
 there too.
 
+### Claude Desktop (local, no OAuth)
+
+Running Claude Desktop on the same machine as Kanboard? Skip steps 2–7 — GitHub OAuth and a public
+tunnel are only needed for the remote HTTP setup above. Claude Desktop launches the server itself
+over stdio, so no OAuth, tunnel or Docker container is needed.
+
+Add to `claude_desktop_config.json` (**Settings → Developer → Edit Config**):
+
+```json
+{
+  "mcpServers": {
+    "kanboard": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/b-ak/kanboard-mcp-server", "kanboard-mcp"],
+      "env": {
+        "KANBOARD_URL": "https://kanboard.example.com",
+        "KANBOARD_USERNAME": "your-kanboard-username",
+        "KANBOARD_API_TOKEN": "your-personal-api-token"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop; `kanboard` appears under the 🔌 tools icon. `MCP_TRANSPORT` defaults to
+`stdio`, so nothing needs setting for it here. This only works for Claude Desktop: claude.ai, the
+mobile apps and Claude Code all talk over HTTP to a server you host, not a local process, so they
+need the setup in steps 1–8 above (Claude Code's own stdio option is in
+[README → stdio](../README.md#2-use-it-from-claude-code-on-the-same-machine-stdio)).
+
 ## Tell Claude when to use Kanboard
 
 Connecting gives Claude the tools; it doesn't tell it *when* to create or move tasks. Put your
