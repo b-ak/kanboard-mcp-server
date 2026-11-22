@@ -3,6 +3,7 @@
 # Kanboard MCP Server
 
 [![M8ven Score](https://m8ven.ai/badge/mcp/b-ak-kanboard-mcp-server-q44d8c?v=1bbd095754e24dd0ddefcab271346d13)](https://m8ven.ai/mcp/b-ak-kanboard-mcp-server-q44d8c?s=readme)
+[![Kanboard MCP server](https://mcprush.com/badge/b-ak-kanboard-mcp/card.svg)](https://mcprush.com/to/b-ak-kanboard-mcp?ref=badge)
 
 An [MCP](https://modelcontextprotocol.io) server that lets Claude create, update and track tasks on
 your self-hosted [Kanboard](https://kanboard.org), from Claude Code, Claude Desktop, claude.ai or
