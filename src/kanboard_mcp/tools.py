@@ -31,7 +31,7 @@ DueDate = Annotated[
     Field(description="Due date as 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM'; empty string clears it"),
 ]
 ColumnRef = Annotated[str, Field(description="Column name (case-insensitive) or column ID")]
-TagColor = Annotated[
+Color = Annotated[
     Literal[
         "yellow",
         "blue",
@@ -50,7 +50,7 @@ TagColor = Annotated[
         "light_green",
         "amber",
     ],
-    Field(description="Kanboard tag color"),
+    Field(description="Kanboard color, shared by tags and task cards"),
 ]
 
 
@@ -290,7 +290,7 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
     def create_tag(
         project_id: ProjectId,
         tag: Annotated[str, Field(min_length=1, description="Tag name")],
-        color: TagColor | None = None,
+        color: Color | None = None,
     ) -> dict[str, Any]:
         """Create a project tag, optionally with a color."""
         params: dict[str, Any] = {"project_id": project_id, "tag": tag}
@@ -313,7 +313,7 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
             ),
         ],
         color: Annotated[
-            TagColor | None, Field(description="New color; omit to keep the current one")
+            Color | None, Field(description="New color; omit to keep the current one")
         ] = None,
     ) -> str:
         """Rename a tag and/or set its color."""
@@ -427,6 +427,7 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
         owner_id: Annotated[int | None, Field(gt=0, description="Assignee user ID")] = None,
         due_date: DueDate | None = None,
         tags: list[str] | None = None,
+        color: Annotated[Color | None, Field(description="Card color")] = None,
     ) -> dict[str, Any]:
         """Create a task. Defaults to the project's first column."""
         params: dict[str, Any] = {"project_id": project_id, "title": title.strip()}
@@ -442,6 +443,8 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
             params["date_due"] = parse_due(due_date)
         if tags:
             params["tags"] = tags
+        if color:
+            params["color_id"] = color
         task_id = kb.require(kb.call("createTask", **params), "createTask")
         task = kb.get_task(int(task_id))
         return {**compact_task(task, kb.column_names(project_id)), "url": task.get("url")}
@@ -457,6 +460,7 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
         ] = None,
         due_date: DueDate | None = None,
         tags: Annotated[list[str] | None, Field(description="Replaces all tags")] = None,
+        color: Annotated[Color | None, Field(description="Card color")] = None,
     ) -> dict[str, Any]:
         """Update task fields. Only the fields you pass are changed."""
         params: dict[str, Any] = {}
@@ -472,6 +476,8 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
             params["date_due"] = parse_due(due_date)
         if tags is not None:
             params["tags"] = tags
+        if color is not None:
+            params["color_id"] = color
         if not params:
             raise ToolError("Nothing to update")
         kb.require(kb.call("updateTask", id=task_id, **params), f"Updating task {task_id}")

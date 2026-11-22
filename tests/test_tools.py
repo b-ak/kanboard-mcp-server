@@ -206,3 +206,21 @@ def test_list_projects_uses_my_projects_for_user_api(fake):
     result = call(fake, "list_projects")
     assert result.structured_content["result"][0]["board_url"] == "b"
     assert fake.methods() == ["getMyProjects"]
+
+
+def test_create_task_sets_card_color(fake):
+    fake.on("createTask", 43)
+    fake.on("getTask", task(43))
+    fake.on("getColumns", COLUMNS)
+    call(fake, "create_task", project_id=1, title="Fix login", tags=["bug"], color="red")
+    params = dict(fake.calls)["createTask"]
+    assert params["color_id"] == "red"
+    assert params["tags"] == ["bug"]
+
+
+def test_update_task_sets_card_color(fake):
+    fake.on("updateTask", True)
+    fake.on("getTask", task(5))
+    fake.on("getColumns", COLUMNS)
+    call(fake, "update_task", task_id=5, color="grey")
+    assert dict(fake.calls)["updateTask"] == {"id": 5, "color_id": "grey"}

@@ -23,7 +23,7 @@ reach over HTTP (localhost, LAN or a public URL) and with any Kanboard database 
 | `get_overdue_tasks` | Overdue tasks, for you or for one project |
 | `get_task` | Details, tags, subtasks, comments and attachment list |
 | `get_task_file` | Read an attachment: images come back as images, text files as text |
-| `create_task` / `update_task` | Title, description, priority, column, assignee, due date, tags |
+| `create_task` / `update_task` | Title, description, priority, column, assignee, due date, tags, card color |
 | `move_task` | Move a task to another column (by name) |
 | `close_task` / `reopen_task` | Complete or reopen |
 | `add_comment` | Add a progress note (Markdown) |
