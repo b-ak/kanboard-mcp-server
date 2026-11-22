@@ -7,11 +7,11 @@
     "url": "https://github.com/b-ak/kanboard-mcp-server",
     "source": "github"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "packages": [
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/b-ak/kanboard-mcp-server:0.2.0",
+      "identifier": "ghcr.io/b-ak/kanboard-mcp-server:0.3.0",
       "transport": {
         "type": "stdio"
       },

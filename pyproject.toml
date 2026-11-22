@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kanboard-mcp-server"
-version = "0.2.0"
+version = "0.3.0"
 description = "MCP server that lets Claude create and track tasks on a self-hosted Kanboard"
 readme = "README.md"
 requires-python = ">=3.11"
