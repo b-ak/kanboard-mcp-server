@@ -31,6 +31,27 @@ DueDate = Annotated[
     Field(description="Due date as 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM'; empty string clears it"),
 ]
 ColumnRef = Annotated[str, Field(description="Column name (case-insensitive) or column ID")]
+TagColor = Annotated[
+    Literal[
+        "yellow",
+        "blue",
+        "green",
+        "purple",
+        "red",
+        "orange",
+        "grey",
+        "brown",
+        "deep_orange",
+        "dark_grey",
+        "pink",
+        "teal",
+        "cyan",
+        "lime",
+        "light_green",
+        "amber",
+    ],
+    Field(description="Kanboard tag color"),
+]
 
 
 # --------------------------------------------------------------------------- helpers
@@ -253,6 +274,62 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
     def list_project_users(project_id: ProjectId) -> dict[str, str]:
         """List users that can be assigned tasks in a project, as {user_id: name}."""
         return kb.call("getAssignableUsers", project_id=project_id) or {}
+
+    # ---- tags --------------------------------------------------------------
+
+    @mcp.tool(annotations=READ_ONLY)
+    def list_tags(project_id: ProjectId) -> list[dict[str, Any]]:
+        """List tags defined on a project, with their color (null if none is set)."""
+        tags = kb.call("getTagsByProject", project_id=project_id) or []
+        return [
+            {"id": int(t["id"]), "name": t["name"], "color": t.get("color_id") or None}
+            for t in tags
+        ]
+
+    @mcp.tool(annotations=WRITE)
+    def create_tag(
+        project_id: ProjectId,
+        tag: Annotated[str, Field(min_length=1, description="Tag name")],
+        color: TagColor | None = None,
+    ) -> dict[str, Any]:
+        """Create a project tag, optionally with a color."""
+        params: dict[str, Any] = {"project_id": project_id, "tag": tag}
+        if color is not None:
+            params["color_id"] = color
+        tag_id = kb.require(kb.call("createTag", **params), "createTag")
+        return {"id": int(tag_id), "name": tag, "color": color}
+
+    @mcp.tool(annotations=WRITE)
+    def update_tag(
+        tag_id: Annotated[int, Field(gt=0, description="Kanboard tag ID, from list_tags")],
+        tag: Annotated[
+            str,
+            Field(
+                min_length=1,
+                description=(
+                    "Tag name. Kanboard requires this on every call; pass the tag's "
+                    "current name again if you only want to change its color."
+                ),
+            ),
+        ],
+        color: Annotated[
+            TagColor | None, Field(description="New color; omit to keep the current one")
+        ] = None,
+    ) -> str:
+        """Rename a tag and/or set its color."""
+        if color is None:
+            # Kanboard's updateTag overwrites color_id with null when it is omitted,
+            # so look up the current color and send it back unchanged.
+            tags = kb.call("getAllTags") or []
+            current = next((t for t in tags if int(t["id"]) == tag_id), None)
+            if current is None:
+                raise ToolError(f"Tag {tag_id} not found")
+            color = current.get("color_id") or None
+        params: dict[str, Any] = {"tag_id": tag_id, "tag": tag}
+        if color is not None:
+            params["color_id"] = color
+        kb.require(kb.call("updateTag", **params), f"Updating tag {tag_id}")
+        return f"Tag {tag_id} updated"
 
     # ---- task details ----------------------------------------------------------
 
