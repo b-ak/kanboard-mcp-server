@@ -28,6 +28,7 @@ reach over HTTP (localhost, LAN or a public URL) and with any Kanboard database 
 | `add_comment` | Add a progress note (Markdown) |
 | `create_subtask` / `update_subtask` | Checklist items and their status |
 | `list_project_users` | Assignable users |
+| `list_tags` / `create_tag` / `update_tag` | Project tags: list, create (with a color), rename/recolor |
 | `get_me` | Which Kanboard user and API mode the server is using |
 
 Read-only tools are annotated as such, so Claude clients can auto-approve them and ask before writes.

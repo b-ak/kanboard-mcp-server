@@ -105,6 +105,55 @@ def test_add_comment_uses_current_user(fake):
     assert dict(fake.calls)["createComment"] == {"task_id": 5, "user_id": 9, "content": "Progress"}
 
 
+def test_list_tags(fake):
+    fake.on(
+        "getTagsByProject",
+        [
+            {"id": "1", "name": "bug", "project_id": "1", "color_id": "red"},
+            {"id": "2", "name": "docs", "project_id": "1", "color_id": None},
+        ],
+    )
+    result = call(fake, "list_tags", project_id=1)
+    assert result.data == [
+        {"id": 1, "name": "bug", "color": "red"},
+        {"id": 2, "name": "docs", "color": None},
+    ]
+
+
+def test_create_tag_with_color(fake):
+    fake.on("createTag", 7)
+    result = call(fake, "create_tag", project_id=1, tag="chore", color="grey")
+    assert dict(fake.calls)["createTag"] == {"project_id": 1, "tag": "chore", "color_id": "grey"}
+    assert result.data == {"id": 7, "name": "chore", "color": "grey"}
+
+
+def test_create_tag_without_color(fake):
+    fake.on("createTag", 8)
+    call(fake, "create_tag", project_id=1, tag="docs")
+    assert dict(fake.calls)["createTag"] == {"project_id": 1, "tag": "docs"}
+
+
+def test_update_tag_requires_name_every_call(fake):
+    fake.on("updateTag", True)
+    call(fake, "update_tag", tag_id=1, tag="bug", color="red")
+    assert dict(fake.calls)["updateTag"] == {"tag_id": 1, "tag": "bug", "color_id": "red"}
+    assert "getAllTags" not in fake.methods()
+
+
+def test_update_tag_rename_keeps_existing_color(fake):
+    fake.on("getAllTags", [{"id": "1", "name": "bug", "project_id": "1", "color_id": "red"}])
+    fake.on("updateTag", True)
+    call(fake, "update_tag", tag_id=1, tag="defect")
+    assert dict(fake.calls)["updateTag"] == {"tag_id": 1, "tag": "defect", "color_id": "red"}
+
+
+def test_update_tag_unknown_id(fake):
+    fake.on("getAllTags", [])
+    with pytest.raises(ToolError, match="Tag 99 not found"):
+        call(fake, "update_tag", tag_id=99, tag="x")
+    assert "updateTag" not in fake.methods()
+
+
 def test_add_comment_with_app_token_needs_default_user(fake):
     with pytest.raises(ToolError, match="KANBOARD_DEFAULT_USER_ID"):
         call(fake, "add_comment", username="jsonrpc", task_id=5, content="x")
