@@ -336,7 +336,9 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
     @mcp.tool(annotations=READ_ONLY)
     def get_task(
         task_id: TaskId,
-        max_comments: Annotated[int, Field(ge=0, le=200)] = 30,
+        max_comments: Annotated[
+            int, Field(ge=0, le=200, description="How many of the most recent comments to include")
+        ] = 30,
     ) -> dict[str, Any]:
         """Get everything about a task: details, tags, subtasks, comments and attachments.
 
@@ -420,16 +422,26 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
     @mcp.tool(annotations=WRITE)
     def create_task(
         project_id: ProjectId,
-        title: Annotated[str, Field(min_length=1)],
-        description: str = "",
+        title: Annotated[str, Field(min_length=1, description="Task title")],
+        description: Annotated[
+            str, Field(description="Full task description; Markdown supported")
+        ] = "",
         priority: Priority | None = None,
         column: ColumnRef | None = None,
         owner_id: Annotated[int | None, Field(gt=0, description="Assignee user ID")] = None,
         due_date: DueDate | None = None,
-        tags: list[str] | None = None,
+        tags: Annotated[
+            list[str] | None,
+            Field(description="Tag names to apply; tags that don't exist yet are created"),
+        ] = None,
         color: Annotated[Color | None, Field(description="Card color")] = None,
     ) -> dict[str, Any]:
-        """Create a task. Defaults to the project's first column."""
+        """Create a task in a project.
+
+        Defaults to the project's first column when `column` is omitted. Use
+        list_projects to find the project_id, and list_project_users for a
+        valid owner_id. Returns the created task's details, including its URL.
+        """
         params: dict[str, Any] = {"project_id": project_id, "title": title.strip()}
         if description:
             params["description"] = description
@@ -452,8 +464,10 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
     @mcp.tool(annotations=WRITE)
     def update_task(
         task_id: TaskId,
-        title: str | None = None,
-        description: str | None = None,
+        title: Annotated[str | None, Field(description="New task title")] = None,
+        description: Annotated[
+            str | None, Field(description="New full task description; Markdown supported")
+        ] = None,
         priority: Priority | None = None,
         owner_id: Annotated[
             int | None, Field(ge=0, description="Assignee user ID; 0 unassigns")
@@ -532,7 +546,12 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
         return f"Task {task_id} reopened"
 
     @mcp.tool(annotations=WRITE)
-    def add_comment(task_id: TaskId, content: Annotated[str, Field(min_length=1)]) -> str:
+    def add_comment(
+        task_id: TaskId,
+        content: Annotated[
+            str, Field(min_length=1, description="Comment text; Markdown supported")
+        ],
+    ) -> str:
         """Add a comment (Markdown supported) to a task, e.g. a progress log entry."""
         comment_id = kb.require(
             kb.call(
@@ -550,11 +569,17 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
     @mcp.tool(annotations=WRITE)
     def create_subtask(
         task_id: TaskId,
-        title: Annotated[str, Field(min_length=1)],
+        title: Annotated[str, Field(min_length=1, description="Subtask title")],
         user_id: Annotated[int | None, Field(gt=0, description="Assignee user ID")] = None,
         time_estimated: Annotated[float | None, Field(ge=0, description="Hours")] = None,
     ) -> str:
-        """Add a subtask (checklist item) to a task."""
+        """Add a subtask (checklist item) to an existing task.
+
+        Subtasks are lightweight items in a task's checklist, distinct from
+        full Kanboard tasks; use create_task instead when the work needs its
+        own card on the board. time_estimated is informational only and does
+        not affect scheduling.
+        """
         params: dict[str, Any] = {"task_id": task_id, "title": title}
         if user_id:
             params["user_id"] = user_id
@@ -565,12 +590,16 @@ def register_tools(mcp: FastMCP, client: KanboardClient) -> None:
 
     @mcp.tool(annotations=WRITE)
     def update_subtask(
-        subtask_id: Annotated[int, Field(gt=0)],
+        subtask_id: Annotated[int, Field(gt=0, description="Subtask ID, from get_task")],
         task_id: TaskId,
         status: Literal["todo", "in_progress", "done"] | None = None,
-        title: str | None = None,
+        title: Annotated[str | None, Field(description="New subtask title")] = None,
     ) -> str:
-        """Change a subtask's status or title."""
+        """Change a subtask's status and/or title.
+
+        Get subtask_id from get_task's "subtasks" list. At least one of
+        status or title must be provided.
+        """
         params: dict[str, Any] = {"id": subtask_id, "task_id": task_id}
         if status is not None:
             params["status"] = SUBTASK_STATUS[status]
